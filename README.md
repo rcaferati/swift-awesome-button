@@ -62,6 +62,29 @@ AwesomeButton(
 }
 ```
 
+<table>
+  <tr>
+    <td width="33%">
+      <img
+        alt="Blue demo"
+        src="screenshots/demo-button-blue-new.gif"
+      />
+    </td>
+    <td width="33%">
+      <img
+        alt="Cartman demo"
+        src="screenshots/demo-button-cartman.gif"
+      />
+    </td>
+    <td width="33%">
+      <img
+        alt="Rick demo"
+        src="screenshots/demo-button-rick.gif"
+      />
+    </td>
+  </tr>
+</table>
+
 ## Size Changes
 
 `animateSize` is enabled by default.
