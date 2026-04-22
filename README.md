@@ -14,7 +14,7 @@ The library exports:
   `ThemeName`, `ButtonVariant`, `ButtonSize`, `ThemeButtonStyle`,
   `ThemeSizeStyle`, `ThemeDefinition`, and `RegisteredThemeDefinition`
 
-https://github.com/user-attachments/assets/a843570d-1e97-4858-8fb3-3a1a0777b6ea
+<video autoplay muted loop playsinline style="width:100%;max-height:640px" src="https://github.com/user-attachments/assets/a843570d-1e97-4858-8fb3-3a1a0777b6ea"></video>
 
 ## Install
 
