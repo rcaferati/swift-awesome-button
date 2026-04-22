@@ -396,6 +396,13 @@ Build it from the repository root:
 xcodebuild -project Examples/IOSAwesomeButtonDemoApp/IOSAwesomeButtonDemoApp.xcodeproj -scheme IOSAwesomeButtonDemoApp -destination 'generic/platform=iOS Simulator' build
 ```
 
+## Author
+
+**Rafael Caferati**  
+Website: https://caferati.dev  
+LinkedIn: https://linkedin.com/in/rcaferati  
+Instagram: https://instagram.com/rcaferati
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Third-party asset notices are listed in
