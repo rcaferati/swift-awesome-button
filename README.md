@@ -14,28 +14,7 @@ The library exports:
   `ThemeName`, `ButtonVariant`, `ButtonSize`, `ThemeButtonStyle`,
   `ThemeSizeStyle`, `ThemeDefinition`, and `RegisteredThemeDefinition`
 
-<table>
-  <tr>
-    <td width="33%">
-      <img
-        alt="Blue demo"
-        src="screenshots/demo-button-blue-new.gif"
-      />
-    </td>
-    <td width="33%">
-      <img
-        alt="Cartman demo"
-        src="screenshots/demo-button-cartman.gif"
-      />
-    </td>
-    <td width="33%">
-      <img
-        alt="Rick demo"
-        src="screenshots/demo-button-rick.gif"
-      />
-    </td>
-  </tr>
-</table>
+https://github.com/user-attachments/assets/a843570d-1e97-4858-8fb3-3a1a0777b6ea
 
 ## Install
 
