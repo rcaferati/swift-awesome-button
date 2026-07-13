@@ -1,0 +1,27 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "swift-awesome-button",
+          "kind" : "fileSystem",
+          "location" : "/Users/rcaferati/github/public-components/swift-awesome-button",
+          "name" : "swift-awesome-button"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/rcaferati/github/public-components/swift-awesome-button"
+        },
+        "subpath" : "swift-awesome-button"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

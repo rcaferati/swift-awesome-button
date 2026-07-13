@@ -1,0 +1,6 @@
+Target dependency graph (3 targets)
+Target 'IOSAwesomeButtonDemoApp' in project 'IOSAwesomeButtonDemoApp'
+➜ Explicit dependency on target 'SwiftAwesomeButton' in project 'swift-awesome-button'
+Target 'SwiftAwesomeButton' in project 'swift-awesome-button'
+➜ Explicit dependency on target 'SwiftAwesomeButton' in project 'swift-awesome-button'
+Target 'SwiftAwesomeButton' in project 'swift-awesome-button' (no dependencies)

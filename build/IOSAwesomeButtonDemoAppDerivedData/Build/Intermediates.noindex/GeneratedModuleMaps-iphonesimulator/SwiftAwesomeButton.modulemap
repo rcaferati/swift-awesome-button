@@ -1,0 +1,4 @@
+module SwiftAwesomeButton {
+header "SwiftAwesomeButton-Swift.h"
+export *
+}

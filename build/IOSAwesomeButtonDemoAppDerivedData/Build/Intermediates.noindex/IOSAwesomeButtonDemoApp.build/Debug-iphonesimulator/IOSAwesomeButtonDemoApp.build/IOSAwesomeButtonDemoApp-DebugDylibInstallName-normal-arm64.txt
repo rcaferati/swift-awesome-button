@@ -1,0 +1,1 @@
+@rpath/IOSAwesomeButtonDemoApp.debug.dylib
