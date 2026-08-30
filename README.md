@@ -33,7 +33,18 @@ Current Swift support:
 
 - Swift 5.10
 - iOS 16.0+
-- SwiftUI
+- SwiftUI and programmatic UIKit controls
+
+The UIKit controls are a supported public package surface; UIKit is not treated
+as a deprecated compatibility shim. See the package's DocC catalog for direct,
+themed, progress, accessibility, Reduced Motion, UIKit, and Apple-only haptic
+guidance.
+
+For contribution and release-quality commands, see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Public API compatibility policy is in
+[`API_COMPATIBILITY.md`](API_COMPATIBILITY.md), current unreleased changes are in
+[`CHANGELOG.md`](CHANGELOG.md), and reproducible non-blocking measurements are in
+[`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## Basic Usage
 
@@ -103,8 +114,10 @@ AwesomeButton(
 - `animateSize: false` keeps size changes instant
 - fixed-to-auto and auto-to-fixed changes remain instant
 
-Swift keeps auto-width target measurement inside the package renderer. The
-hidden measurement path is internal and does not intercept input.
+Swift measures the single rendered label row for auto width. `before`, the
+label, `after`, padding, and border participate in that width; the face-overlay
+`extra` slot does not. Generic labels and placeholders use the face height as
+their initial and minimum auto width.
 
 ```swift
 import SwiftAwesomeButton
@@ -344,6 +357,9 @@ UIKit wrappers.
 | `textTransition` | `Bool` | `false` | Enables the built-in scramble/reveal animation when a plain string label changes. |
 | `animatedPlaceholder` | `Bool` | `true` | Enables the shimmer loop when the button has no child. |
 | `hapticOnPress` | `Bool` | `true` | Enables iOS haptic feedback on press. |
+| `accessibilityLabel` | `String?` | `nil` | Spoken identity override. Plain text and meaningful custom-label semantics are inferred when absent. |
+| `accessibilityHint` | `String?` | `nil` | Optional explanation for the ordinary accessibility action. |
+| `accessibilityLongPressLabel` | `String?` | `nil` | Spoken custom long-action name. The package-localized default is “Long press.” |
 
 ### ThemedButton Additional Parameters
 
@@ -357,6 +373,107 @@ UIKit wrappers.
 | `flat` | `Bool` | `false` | Requests the `flat` theme variant when available. |
 | `transparent` | `Bool` | `false` | Makes the visible shell layers transparent while keeping content, press, and progress feedback active. |
 | `autoWidth` | `Bool` | `false` | Requests measured auto width instead of the size preset width. |
+
+## Animation Ownership
+
+`pressInAnimationDuration` controls press-down timing when present.
+`animationDuration` is its fallback and also controls direct changes to an
+already-resolved `AwesomeButtonStyle`; `animationCurve` supplies the matching
+curve. Themed variant changes own a separate 200 ms interpolation and pass
+their frames to the inner button without a second style animation. Release is
+always owned by the package spring and ignores these duration fields.
+
+Numeric inputs are normalized before geometry, animation, or accessibility
+consumes them. Non-finite optional values act as absent and continue normal
+theme precedence; non-finite required values use their declared defaults.
+Negative dimensions, padding, borders, radii, raise, typography, debounce,
+stagger, and duration values clamp to zero. Opacity clamps to `[0, 1]`, and a
+fixed width of zero remains an explicit constrained width. SwiftUI and both
+UIKit controls use this same boundary.
+
+## Accessibility and System Adaptation
+
+SwiftUI exposes one accessible button element with independent default and
+named long-press actions. These are atomic actions: they share ordinary,
+debounce, and progress ownership with touch without fabricating touch-only
+press-in or press-out lifecycle callbacks. Disabled, busy, and placeholder
+states remove activation; an unlabeled placeholder is hidden, while an
+explicitly labeled placeholder remains discoverable as unavailable.
+
+The package requests a minimum 44 pt layout and interaction footprint and
+scales configured typography relative to the native `.body` text style.
+Accessibility Dynamic Type may wrap the label and grow the face. Logical slots
+follow the active layout direction while physical corner names stay physical.
+With Reduce Motion enabled, package-owned press, release, style, size, text,
+placeholder, and progress effects snap to their current logical state without
+changing callback ordering, debounce, long-press timing, haptics, or progress
+handle ownership. Package-owned spoken state/action strings are Swift Package
+resources and can be extended with additional localizations.
+
+### Apple haptic extension
+
+`hapticOnPress` is an Apple-only extension, not a shared cross-platform API.
+Its default is `true`. For an eligible physical hold the package dispatches
+`onPressIn`, revalidates current state, commits pressed state, requests exactly
+one `.light` `UIImpactFeedbackGenerator` impact, then dispatches
+`onPressedIn`. Re-entrant invalidation before the commit requests no impact;
+cancellation after an accepted press never duplicates it. Atomic accessibility
+and keyboard activation does not fabricate a physical haptic. Haptics do not
+change callback, progress, lifecycle, or accessibility semantics. Hardware
+feel still requires validation on a supported iOS device; simulator tests prove
+request ordering and counts only.
+
+## UIKit Controls
+
+`AwesomeButtonControl` and `ThemedButtonControl` are supported, programmatic
+`UIControl` surfaces. They retain one `UIHostingController`, forward standard
+control events, expose mutable value-type `Configuration`, and participate in
+Auto Layout through `intrinsicContentSize` and `sizeThatFits(_:)`.
+The outer control is the sole accessibility element; the hosted SwiftUI subtree
+is hidden from assistive technologies. `accessibilityActivate()`, the custom
+long action, Return, and Space route through the same atomic owners used by the
+SwiftUI accessibility actions.
+
+```swift
+final class CheckoutViewController: UIViewController {
+    private lazy var checkout = AwesomeButtonControl(
+        child: "Checkout",
+        progress: true,
+        hapticOnPress: true
+    )
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.addSubview(checkout)
+        checkout.attach(to: self)
+
+        checkout.addAction(UIAction { [weak checkout] _ in
+            performCheckout { checkout?.completeProgress() }
+        }, for: .primaryActionTriggered)
+    }
+
+    func showConfirmation() {
+        var next = checkout.configuration
+        next.child = "Complete"
+        next.progress = false
+        checkout.configuration = next
+    }
+}
+```
+
+Physical interactions emit `.touchDown`, then `.touchUpInside` and
+`.primaryActionTriggered` for an accepted activation. Cancellation, debounce
+rejection, and long-press suppression terminate through `.touchCancel` instead.
+Selector targets and `UIAction` handlers may coexist with the Swift closure
+callbacks. In progress mode, target/action consumers finish the current
+one-shot run with `completeProgress(_:)`.
+
+Call `attach(to:)` for deterministic view-controller containment and
+`detachFromParentViewController()` before transferring ownership manually.
+Responder-chain discovery is a compatibility convenience when the control is
+inserted into a visible controller. The `before`, `after`, and `extra`
+configuration slots are hosted SwiftUI `AnyView` content; they are not native
+`UIView` slots. Storyboard decoding is intentionally unavailable.
 
 ## Development
 
