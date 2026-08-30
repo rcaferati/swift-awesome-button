@@ -666,6 +666,39 @@ final class UIKitControlIntegrationTests: XCTestCase {
     XCTAssertTrue(discoveryControl.attachedParentViewController === host.parent)
   }
 
+  func testHostCoordinatorDoesNotRetainControlsAfterTeardown() {
+    weak var releasedDirectControl: AwesomeButtonControl?
+    weak var releasedDirectHost: UIViewController?
+    weak var releasedThemedControl: ThemedButtonControl?
+    weak var releasedThemedHost: UIViewController?
+
+    autoreleasepool {
+      let direct = AwesomeButtonControl(child: "Direct", hapticOnPress: false)
+      let directHost = host(direct)
+      releasedDirectControl = direct
+      releasedDirectHost = direct.hostedViewController
+      direct.detachFromParentViewController()
+      direct.removeFromSuperview()
+      directHost.window.isHidden = true
+      directHost.window.rootViewController = nil
+
+      let themed = ThemedButtonControl(child: "Themed", hapticOnPress: false)
+      let themedHost = host(themed)
+      releasedThemedControl = themed
+      releasedThemedHost = themed.hostedViewController
+      themed.detachFromParentViewController()
+      themed.removeFromSuperview()
+      themedHost.window.isHidden = true
+      themedHost.window.rootViewController = nil
+    }
+
+    spinMainRunLoop()
+    XCTAssertNil(releasedDirectControl)
+    XCTAssertNil(releasedDirectHost)
+    XCTAssertNil(releasedThemedControl)
+    XCTAssertNil(releasedThemedHost)
+  }
+
   func testRemovalDuringHeldGestureIsSilentAfterTouchDown() throws {
     var events: [String] = []
     let control = AwesomeButtonControl(
