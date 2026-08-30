@@ -703,6 +703,43 @@ final class NativeFirstPassInteractionTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(surface.bounds.width, 52)
   }
 
+  func testHostedAnimatedStringAutoWidthMovesMonotonicallyBetweenEndpoints() throws {
+    let model = HostedStringButtonModel()
+    model.child = "Launch"
+    model.textTransition = true
+    let host = host(HostedStringButtonHarness(model: model))
+    defer { host.teardown() }
+
+    spinMainRunLoop(0.12)
+    let surface = try XCTUnwrap(findTouchSurface(in: host.controller.view))
+    let shortWidth = surface.bounds.width
+
+    model.animateSize = true
+    model.child = "View analytics dashboard"
+    let growthSamples = sampleTouchSurfaceWidths(in: host.controller, duration: 0.55)
+    let longWidth = try XCTUnwrap(growthSamples.last)
+
+    XCTAssertGreaterThan(longWidth, shortWidth)
+    assertMonotonic(
+      growthSamples,
+      direction: .increasing,
+      lowerBound: shortWidth,
+      upperBound: longWidth
+    )
+
+    model.child = "Launch"
+    let shrinkSamples = sampleTouchSurfaceWidths(in: host.controller, duration: 0.55)
+    let settledShortWidth = try XCTUnwrap(shrinkSamples.last)
+
+    XCTAssertEqual(settledShortWidth, shortWidth, accuracy: 1)
+    assertMonotonic(
+      shrinkSamples,
+      direction: .decreasing,
+      lowerBound: settledShortWidth,
+      upperBound: longWidth
+    )
+  }
+
   func testHostedDisablePlaceholderAndRemovalCancelOrTeardownWithCurrentClosures() throws {
     let model = HostedStringButtonModel()
     let host = host(HostedStringButtonHarness(model: model))
@@ -792,6 +829,58 @@ final class NativeFirstPassInteractionTests: XCTestCase {
     wait(for: [expectation], timeout: duration + 0.5)
   }
 
+  private enum WidthDirection {
+    case increasing
+    case decreasing
+  }
+
+  private func sampleTouchSurfaceWidths(
+    in controller: UIViewController,
+    duration: TimeInterval,
+    interval: TimeInterval = 1.0 / 120.0
+  ) -> [CGFloat] {
+    let deadline = Date().addingTimeInterval(duration)
+    var samples: [CGFloat] = []
+
+    while Date() < deadline {
+      controller.view.setNeedsLayout()
+      controller.view.layoutIfNeeded()
+      if let surface = findTouchSurface(in: controller.view) {
+        samples.append(surface.bounds.width)
+      }
+      RunLoop.main.run(until: Date().addingTimeInterval(interval))
+    }
+
+    controller.view.setNeedsLayout()
+    controller.view.layoutIfNeeded()
+    if let surface = findTouchSurface(in: controller.view) {
+      samples.append(surface.bounds.width)
+    }
+    return samples
+  }
+
+  private func assertMonotonic(
+    _ samples: [CGFloat],
+    direction: WidthDirection,
+    lowerBound: CGFloat,
+    upperBound: CGFloat,
+    tolerance: CGFloat = 1
+  ) {
+    XCTAssertGreaterThan(samples.count, 2)
+    for sample in samples {
+      XCTAssertGreaterThanOrEqual(sample, lowerBound - tolerance)
+      XCTAssertLessThanOrEqual(sample, upperBound + tolerance)
+    }
+    for (previous, next) in zip(samples, samples.dropFirst()) {
+      switch direction {
+      case .increasing:
+        XCTAssertGreaterThanOrEqual(next + tolerance, previous)
+      case .decreasing:
+        XCTAssertLessThanOrEqual(next - tolerance, previous)
+      }
+    }
+  }
+
   private func host<Content: View>(_ content: Content) -> HostedView {
     let controller = UIHostingController(rootView: content)
     let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
@@ -857,6 +946,8 @@ private final class HostedStringButtonModel: ObservableObject {
   @Published var mounted = true
   @Published var callbackVersion = "A"
   @Published var stretch = false
+  @Published var animateSize = false
+  @Published var textTransition = false
   var events: [String] = []
 }
 
@@ -872,7 +963,8 @@ private struct HostedStringButtonHarness: View {
         onPress: { _ in model.events.append("press-\(version)") },
         disabled: model.disabled,
         stretch: model.stretch,
-        animateSize: false,
+        animateSize: model.animateSize,
+        textTransition: model.textTransition,
         hapticOnPress: false,
         onPressIn: { model.events.append("in-\(version)") },
         onPressOut: { model.events.append("out-\(version)") },

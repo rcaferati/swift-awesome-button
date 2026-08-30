@@ -43,7 +43,32 @@ final class ControllerPlanningTests: XCTestCase {
         textTransitionEnabled: true,
         nextText: "Current",
         currentTarget: "Current",
+        displayedText: "Partial",
+        transitionActive: true
+      ),
+      .keep
+    )
+  }
+
+  func testInactiveSameTargetRestartsFromDisplayedFrame() {
+    XCTAssertEqual(
+      resolveButtonTextUpdatePlan(
+        textTransitionEnabled: true,
+        nextText: "Current",
+        currentTarget: "Current",
         displayedText: "Partial"
+      ),
+      .transition(source: "Partial", target: "Current")
+    )
+  }
+
+  func testInactiveSameTargetAlreadyDisplayedKeepsCurrentTextState() {
+    XCTAssertEqual(
+      resolveButtonTextUpdatePlan(
+        textTransitionEnabled: true,
+        nextText: "Current",
+        currentTarget: "Current",
+        displayedText: "Current"
       ),
       .keep
     )
@@ -106,6 +131,36 @@ final class ControllerPlanningTests: XCTestCase {
         slotStaggerMs: 7
       ),
       .textOnly(sourceText: "Save", targetText: "Open", animateText: true)
+    )
+  }
+
+  func testTypographyOnlyAutoWidthChangeDoesNotManufactureTextFrames() {
+    let expectedTiming = resolveAutoWidthTextTransitionTiming(
+      fromText: "Label",
+      targetText: "Label",
+      flow: .growFirst,
+      slotStaggerMs: 7
+    )
+
+    XCTAssertEqual(
+      resolveAutoWidthTextUpdatePlan(
+        isEligible: true,
+        targetText: "Label",
+        currentWidth: 100,
+        targetWidth: 120,
+        displayedText: "Label",
+        animateSize: true,
+        textTransition: true,
+        slotStaggerMs: 7
+      ),
+      .growFirst(
+        sourceText: "Label",
+        targetText: "Label",
+        targetWidth: 120,
+        timing: expectedTiming,
+        animateSize: true,
+        animateText: false
+      )
     )
   }
 

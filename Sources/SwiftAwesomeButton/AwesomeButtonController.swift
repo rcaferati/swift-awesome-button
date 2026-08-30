@@ -564,11 +564,15 @@ internal final class AwesomeButtonController: ObservableObject, AwesomeButtonCon
     previousWidthMode: ButtonWidthMode?
   ) {
     if let previousConfiguration = renderedConfiguration,
-      shouldAnimateStyleTransition(from: previousConfiguration, to: configuration)
+      let timing = resolvedStyleTransitionTiming(
+        from: previousConfiguration,
+        to: configuration
+      )
     {
       styleTransitionOwner.start(
         from: currentVisualStyle(from: previousConfiguration),
-        to: configuration.style
+        to: configuration.style,
+        timing: timing
       )
     } else {
       styleTransitionOwner.reset()
@@ -577,7 +581,7 @@ internal final class AwesomeButtonController: ObservableObject, AwesomeButtonCon
     renderedConfiguration = configuration
 
     if displayedText == nil {
-      displayedText = configuration.childText
+      assignDisplayedTextWithoutAnimation(configuration.childText)
     }
 
     sizeTextOwner.update(
@@ -602,16 +606,6 @@ internal final class AwesomeButtonController: ObservableObject, AwesomeButtonCon
       sourceStyle,
       configuration.style,
       progress: styleTransitionProgress
-    )
-  }
-
-  private func shouldAnimateStyleTransition(
-    from currentConfiguration: AwesomeButtonResolvedConfiguration,
-    to nextConfiguration: AwesomeButtonResolvedConfiguration
-  ) -> Bool {
-    shouldAnimateResolvedStyleTransition(
-      from: currentConfiguration,
-      to: nextConfiguration
     )
   }
 
@@ -668,7 +662,7 @@ internal final class AwesomeButtonController: ObservableObject, AwesomeButtonCon
 
     switch command {
     case .setDisplayedText(_, let value):
-      displayedText = value
+      assignDisplayedTextWithoutAnimation(value)
     case .setWidth(_, let value, let transition):
       apply(transition: transition) {
         self.resolvedWidth = value
@@ -687,6 +681,14 @@ internal final class AwesomeButtonController: ObservableObject, AwesomeButtonCon
       inputConfiguration?.nativeControlBridge?.measuredWidthDidChange(value)
     }
     return .accepted
+  }
+
+  private func assignDisplayedTextWithoutAnimation(_ value: String?) {
+    var transaction = Transaction(animation: nil)
+    transaction.disablesAnimations = true
+    withTransaction(transaction) {
+      displayedText = value
+    }
   }
 
   private func apply(

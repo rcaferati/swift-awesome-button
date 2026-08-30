@@ -1,13 +1,13 @@
 import SwiftUI
 
-private struct AwesomeButtonStyleFrameOwnershipKey: EnvironmentKey {
-  static let defaultValue = false
+private struct AwesomeButtonStyleTransitionContextKey: EnvironmentKey {
+  static let defaultValue: AwesomeButtonStyleTransitionContext? = nil
 }
 
 extension EnvironmentValues {
-  var awesomeButtonStyleFramesArePreInterpolated: Bool {
-    get { self[AwesomeButtonStyleFrameOwnershipKey.self] }
-    set { self[AwesomeButtonStyleFrameOwnershipKey.self] = newValue }
+  var awesomeButtonStyleTransitionContext: AwesomeButtonStyleTransitionContext? {
+    get { self[AwesomeButtonStyleTransitionContextKey.self] }
+    set { self[AwesomeButtonStyleTransitionContextKey.self] = newValue }
   }
 }
 
@@ -79,8 +79,7 @@ public struct AwesomeButton: View {
   public let onProgressEnd: (() -> Void)?
 
   @Environment(\.awesomeButtonThemeData) private var themeData
-  @Environment(\.awesomeButtonStyleFramesArePreInterpolated) private
-    var styleFramesArePreInterpolated
+  @Environment(\.awesomeButtonStyleTransitionContext) private var styleTransitionContext
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   #if canImport(UIKit)
@@ -275,7 +274,8 @@ public struct AwesomeButton: View {
       onPressedOut: onPressedOut,
       onProgressStart: onProgressStart,
       onProgressEnd: onProgressEnd,
-      animatesResolvedStyleChanges: styleFramesArePreInterpolated == false,
+      animatesResolvedStyleChanges: true,
+      styleTransitionContext: styleTransitionContext,
       reduceMotion: reduceMotion,
       dynamicTypeSize: dynamicTypeSize,
       nativeControlBridge: nativeControlContext?.bridge,

@@ -9,71 +9,6 @@ internal struct ResolvedThemedButtonPresentation {
   let paddingBottom: CGFloat?
 }
 
-@MainActor
-internal final class ThemedButtonStyleTransitionController: ObservableObject {
-  @Published private(set) var progress: CGFloat = 1
-  private(set) var sourceStyle: AwesomeButtonStyle?
-  private(set) var targetStyle: AwesomeButtonStyle?
-
-  func frame(for proposedTarget: AwesomeButtonStyle) -> AwesomeButtonStyle {
-    guard let sourceStyle, let targetStyle else {
-      return proposedTarget
-    }
-    return interpolateAwesomeButtonStyle(sourceStyle, targetStyle, progress: progress)
-  }
-
-  private var previousSourceSignature: Int?
-  private var previousVariant: String?
-  private var previousTransparent: Bool?
-
-  func update(
-    target: AwesomeButtonStyle,
-    sourceSignature: Int,
-    variant: ButtonVariant,
-    transparent: Bool,
-    reduceMotion: Bool = false
-  ) {
-    let hadPreviousContext = previousSourceSignature != nil
-    let sameThemeSource = previousSourceSignature == sourceSignature
-    let sameTransparent = previousTransparent == transparent
-    let variantChanged = previousVariant != variant.rawValue
-    previousSourceSignature = sourceSignature
-    previousVariant = variant.rawValue
-    previousTransparent = transparent
-
-    guard targetStyle?.visualSignature != target.visualSignature else {
-      return
-    }
-    guard targetStyle != nil else {
-      sourceStyle = target
-      targetStyle = target
-      progress = 1
-      return
-    }
-
-    let current = frame(for: target)
-    sourceStyle = current
-    targetStyle = target
-    let duration = resolveThemedStyleTransitionDuration(
-      hadPreviousContext: hadPreviousContext,
-      sameThemeSource: sameThemeSource,
-      sameTransparent: sameTransparent,
-      variantChanged: variantChanged,
-      reduceMotion: reduceMotion,
-      styleDuration: target.animationDuration ?? 0.14
-    )
-    if duration == 0 {
-      sourceStyle = target
-      progress = 1
-      return
-    }
-    progress = 0
-    withAnimation(.easeOut(duration: duration)) {
-      progress = 1
-    }
-  }
-}
-
 internal func resolveThemedStyleTransitionDuration(
   hadPreviousContext: Bool,
   sameThemeSource: Bool,
@@ -91,14 +26,6 @@ internal func resolveThemedStyleTransitionDuration(
     return 0.2
   }
   return AwesomeButtonNormalization.requiredDuration(styleDuration, fallback: 0.14)
-}
-
-private struct ThemedButtonTransitionTaskID: Hashable {
-  let styleSignature: Int
-  let sourceSignature: Int
-  let variant: String
-  let transparent: Bool
-  let reduceMotion: Bool
 }
 
 internal func themedButtonSourceSignature(
@@ -224,8 +151,6 @@ internal func resolveThemeSelection(
 
 /// A SwiftUI button that resolves a theme, semantic variant, and named size natively.
 public struct ThemedButton: View {
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @StateObject private var styleTransitionController = ThemedButtonStyleTransitionController()
   private let childText: String?
   private let labelView: AnyView?
   private let beforeView: AnyView?
@@ -238,11 +163,11 @@ public struct ThemedButton: View {
   public let index: Int?
   /// An optional built-in theme name.
   public let name: ThemeName?
-  /// The requested semantic or social variant.
+  /// The requested semantic or social variant; `.flat` remains visually flat while disabled.
   public let type: ButtonVariant
   /// The requested named size.
   public let size: ButtonSize
-  /// Requests the flat variant unless disabled styling overrides it.
+  /// Requests the flat visual variant, including while disabled.
   public let flat: Bool
   /// Removes face, depth, shadow, and border paint while retaining interaction geometry.
   public let transparent: Bool
@@ -508,7 +433,11 @@ public struct ThemedButton: View {
       index: index,
       name: name
     )
-    let renderedStyle = styleTransitionController.frame(for: presentation.style)
+    let transitionContext = AwesomeButtonStyleTransitionContext(
+      sourceSignature: sourceSignature,
+      variant: buttonType.rawValue,
+      transparent: transparent
+    )
 
     Group {
       if let childText {
@@ -526,7 +455,7 @@ public struct ThemedButton: View {
           after: afterView,
           extra: extraView,
           stretch: stretch,
-          style: renderedStyle,
+          style: presentation.style,
           activeOpacity: activeOpacity,
           debouncedPressTime: debouncedPressTime,
           progress: progress,
@@ -561,7 +490,7 @@ public struct ThemedButton: View {
           after: afterView,
           extra: extraView,
           stretch: stretch,
-          style: renderedStyle,
+          style: presentation.style,
           activeOpacity: activeOpacity,
           debouncedPressTime: debouncedPressTime,
           progress: progress,
@@ -597,7 +526,7 @@ public struct ThemedButton: View {
           after: afterView,
           extra: extraView,
           stretch: stretch,
-          style: renderedStyle,
+          style: presentation.style,
           activeOpacity: activeOpacity,
           debouncedPressTime: debouncedPressTime,
           progress: progress,
@@ -620,25 +549,8 @@ public struct ThemedButton: View {
         )
       }
     }
-    .awesomeButtonTheme(AwesomeButtonThemeData(style: renderedStyle))
-    .environment(\.awesomeButtonStyleFramesArePreInterpolated, true)
-    .task(
-      id: ThemedButtonTransitionTaskID(
-        styleSignature: presentation.style.visualSignature,
-        sourceSignature: sourceSignature,
-        variant: buttonType.rawValue,
-        transparent: transparent,
-        reduceMotion: reduceMotion
-      )
-    ) {
-      styleTransitionController.update(
-        target: presentation.style,
-        sourceSignature: sourceSignature,
-        variant: buttonType,
-        transparent: transparent,
-        reduceMotion: reduceMotion
-      )
-    }
+    .awesomeButtonTheme(AwesomeButtonThemeData(style: presentation.style))
+    .environment(\.awesomeButtonStyleTransitionContext, transitionContext)
   }
 
   private func resolveTheme() -> RegisteredThemeDefinition {

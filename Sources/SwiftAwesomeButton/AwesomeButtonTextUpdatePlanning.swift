@@ -10,7 +10,8 @@ internal func resolveButtonTextUpdatePlan(
   textTransitionEnabled: Bool,
   nextText: String?,
   currentTarget: String?,
-  displayedText: String?
+  displayedText: String?,
+  transitionActive: Bool = false
 ) -> ButtonTextUpdatePlan {
   let previousText = displayedText ?? currentTarget
 
@@ -19,7 +20,14 @@ internal func resolveButtonTextUpdatePlan(
   }
 
   if nextText == currentTarget {
-    return .keep
+    if transitionActive || nextText == displayedText {
+      return .keep
+    }
+
+    guard let nextText, let previousText, previousText.isEmpty == false else {
+      return .assign(nextText)
+    }
+    return .transition(source: previousText, target: nextText)
   }
 
   guard let nextText, let previousText, previousText.isEmpty == false else {

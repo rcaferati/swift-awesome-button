@@ -185,16 +185,36 @@ internal struct AwesomeButtonBody: View, Animatable {
     resolvedCornerRadii(style: interpolatedStyle, layoutDirection: layoutDirection)
   }
 
-  private var font: Font {
-    let size = awesomeButtonScaledTextSize(
-      interpolatedStyle.textSize ?? 14,
+  private var typographyFrame: AwesomeButtonTypographyFrame {
+    resolvedAwesomeButtonTypographyFrame(
+      sourceStyle: controller.styleTransitionSourceStyle,
+      targetStyle: configuration.style,
+      progress: clampedStyleTransitionProgress,
+      animateSize: configuration.animateSize,
+      reduceMotion: configuration.reduceMotion
+    )
+  }
+
+  private var scaledTypographyTextSize: CGFloat {
+    awesomeButtonScaledTextSize(
+      typographyFrame.textSize,
       dynamicTypeSize: configuration.dynamicTypeSize
     )
-    if let family = interpolatedStyle.textFontFamily {
-      return .custom(family, size: size)
+  }
+
+  private var scaledTypographyLineHeight: CGFloat {
+    awesomeButtonScaledTextSize(
+      typographyFrame.lineHeight,
+      dynamicTypeSize: configuration.dynamicTypeSize
+    )
+  }
+
+  private var font: Font {
+    if let family = typographyFrame.fontFamily {
+      return .custom(family, size: scaledTypographyTextSize)
     }
 
-    return .system(size: size, weight: .bold)
+    return .system(size: scaledTypographyTextSize, weight: .bold)
   }
 
   var body: some View {
@@ -432,9 +452,16 @@ internal struct AwesomeButtonBody: View, Animatable {
       Text(text)
         .font(font)
         .foregroundStyle(foregroundColor)
+        .lineSpacing(max(0, scaledTypographyLineHeight - scaledTypographyTextSize))
         .lineLimit(configuration.dynamicTypeSize > .large ? nil : 1)
         .fixedSize(horizontal: configuration.dynamicTypeSize <= .large, vertical: true)
-        .animation(nil, value: text)
+        .scaleEffect(typographyFrame.scale)
+        .transaction { transaction in
+          // String replacement is package-owned. Explicit text transitions
+          // provide their own frames and must not inherit a style animation.
+          transaction.animation = nil
+          transaction.disablesAnimations = true
+        }
     } else if let labelView = configuration.labelView {
       labelView
     } else {

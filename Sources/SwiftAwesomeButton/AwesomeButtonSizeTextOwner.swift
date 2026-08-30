@@ -70,6 +70,7 @@ internal final class AwesomeButtonSizeTextOwner {
   private var delayedTextWorkItem: DispatchWorkItem?
   private var delayedClipAlignmentResetWorkItem: DispatchWorkItem?
   private var textTransitionController: TextTransitionControlling?
+  private var textTransitionIsActive = false
   private var latestInput: AwesomeButtonSizeTextInput?
   private var currentTextTarget: String?
   private(set) var currentWidthMode: ButtonWidthMode?
@@ -94,8 +95,12 @@ internal final class AwesomeButtonSizeTextOwner {
     previousWidthMode: ButtonWidthMode?,
     presentation: AwesomeButtonSizeTextPresentation
   ) {
-    cancelTransitionWork()
-    generation += 1
+    let preservesTextTransition = shouldPreserveTextTransition(for: input)
+    cancelGeometryWork()
+    if !preservesTextTransition {
+      cancelTextWork()
+      generation += 1
+    }
     latestInput = input
     currentWidthMode = input.widthMode
     activeDeferralToken = nil
@@ -111,7 +116,8 @@ internal final class AwesomeButtonSizeTextOwner {
       input: input,
       previousWidthMode: previousWidthMode,
       presentation: presentation,
-      generation: generation
+      generation: generation,
+      preservesTextTransition: preservesTextTransition
     )
   }
 
@@ -147,6 +153,17 @@ internal final class AwesomeButtonSizeTextOwner {
     currentWidth: CGFloat?
   ) {
     latestInput = input
+
+    // Plain-string auto width is resolved from the accepted target label before
+    // its transition begins. The rendered row contains temporary scramble
+    // frames while that transition is active, so treating those measurements as
+    // new targets would continuously retarget the width animation. Arbitrary
+    // content and auxiliary-slot rows have no deterministic string signature and
+    // continue to use their single rendered row as the source of truth.
+    if input.isAutoWidthTextEligible, input.measurementSignature != nil {
+      return
+    }
+
     let targetWidth = max(input.height, measuredWidth)
     guard targetWidth.isFinite, targetWidth > 0 else { return }
     _ = sink?.receive(.reportMeasuredAutoWidth(generation: generation, value: targetWidth))
@@ -226,13 +243,16 @@ internal final class AwesomeButtonSizeTextOwner {
     input: AwesomeButtonSizeTextInput,
     previousWidthMode: ButtonWidthMode?,
     presentation: AwesomeButtonSizeTextPresentation,
-    generation: Int
+    generation: Int,
+    preservesTextTransition: Bool
   ) {
     switch input.widthMode {
     case .stretch:
       setClip(.center, generation: generation)
       setWidth(nil, transition: .immediate, generation: generation)
-      syncText(input: input, displayedText: presentation.displayedText, generation: generation)
+      if !preservesTextTransition {
+        syncText(input: input, displayedText: presentation.displayedText, generation: generation)
+      }
     case .fixed:
       setClip(.center, generation: generation)
       let shouldSnap = shouldSnapWidthBridge(previous: previousWidthMode, next: .fixed)
@@ -245,10 +265,31 @@ internal final class AwesomeButtonSizeTextOwner {
           generation: generation
         )
       }
-      syncText(input: input, displayedText: presentation.displayedText, generation: generation)
+      if !preservesTextTransition {
+        syncText(input: input, displayedText: presentation.displayedText, generation: generation)
+      }
     case .auto:
       let targetWidth = input.measurementSignature.map {
         max(input.height, measurementService.measureWidth(for: $0))
+      }
+      if let targetWidth {
+        _ = sink?.receive(
+          .reportMeasuredAutoWidth(generation: generation, value: targetWidth)
+        )
+      }
+      if preservesTextTransition {
+        if let targetWidth,
+          abs((presentation.resolvedWidth ?? 0) - targetWidth) >= 0.5
+        {
+          setWidth(
+            targetWidth,
+            transition: input.animateSize && !input.reduceMotion
+              ? .animated(duration: sizeAnimationDuration)
+              : .immediate,
+            generation: generation
+          )
+        }
+        return
       }
       let currentWidth =
         shouldSnapWidthBridge(previous: previousWidthMode, next: .auto)
@@ -376,7 +417,8 @@ internal final class AwesomeButtonSizeTextOwner {
       textTransitionEnabled: input.textTransition,
       nextText: input.childText,
       currentTarget: currentTextTarget,
-      displayedText: displayedText
+      displayedText: displayedText,
+      transitionActive: textTransitionIsActive
     ) {
     case .assign(let nextText):
       currentTextTarget = nextText
@@ -396,11 +438,16 @@ internal final class AwesomeButtonSizeTextOwner {
     delay: TimeInterval,
     generation: Int
   ) {
+    if animateText {
+      textTransitionIsActive = true
+    }
     let workItem = DispatchWorkItem { [weak self] in
       guard let self, self.generation == generation else { return }
+      self.delayedTextWorkItem = nil
       if animateText {
         self.runStringTransition(from: sourceText, to: targetText, generation: generation)
       } else {
+        self.textTransitionIsActive = false
         self.setText(targetText, generation: generation)
       }
     }
@@ -444,10 +491,12 @@ internal final class AwesomeButtonSizeTextOwner {
   ) {
     guard let latestInput else { return }
     if latestInput.reduceMotion {
+      textTransitionIsActive = false
       setText(target, generation: generation)
       onComplete?()
       return
     }
+    textTransitionIsActive = true
     textTransitionController = runTextTransition(
       fromText: source,
       targetText: target,
@@ -457,6 +506,8 @@ internal final class AwesomeButtonSizeTextOwner {
       self.setText(current, generation: generation)
     } onComplete: { [weak self] in
       guard let self, self.generation == generation else { return }
+      self.textTransitionIsActive = false
+      self.textTransitionController = nil
       self.setText(target, generation: generation)
       onComplete?()
     }
@@ -480,15 +531,35 @@ internal final class AwesomeButtonSizeTextOwner {
     _ = sink?.receive(.setClipAlignment(generation: generation, value: alignment))
   }
 
-  private func cancelTransitionWork() {
+  private func shouldPreserveTextTransition(for input: AwesomeButtonSizeTextInput) -> Bool {
+    guard textTransitionIsActive,
+      input.textTransition,
+      !input.reduceMotion,
+      input.childText == currentTextTarget,
+      input.widthMode == latestInput?.widthMode,
+      input.textTransitionSlotStaggerMs == latestInput?.textTransitionSlotStaggerMs
+    else { return false }
+    return true
+  }
+
+  private func cancelGeometryWork() {
     delayedWidthWorkItem?.cancel()
     delayedWidthWorkItem = nil
-    delayedTextWorkItem?.cancel()
-    delayedTextWorkItem = nil
     delayedClipAlignmentResetWorkItem?.cancel()
     delayedClipAlignmentResetWorkItem = nil
+  }
+
+  private func cancelTextWork() {
+    delayedTextWorkItem?.cancel()
+    delayedTextWorkItem = nil
     textTransitionController?.stop()
     textTransitionController = nil
+    textTransitionIsActive = false
+  }
+
+  private func cancelTransitionWork() {
+    cancelGeometryWork()
+    cancelTextWork()
   }
 }
 

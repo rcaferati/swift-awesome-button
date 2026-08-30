@@ -27,7 +27,11 @@ internal final class AwesomeButtonStyleTransitionOwner {
     self.sink = sink
   }
 
-  func start(from sourceStyle: AwesomeButtonStyle, to targetStyle: AwesomeButtonStyle) {
+  func start(
+    from sourceStyle: AwesomeButtonStyle,
+    to targetStyle: AwesomeButtonStyle,
+    timing: AwesomeButtonAnimationTiming
+  ) {
     kickoffWorkItem?.cancel()
     generation += 1
     let generation = generation
@@ -37,7 +41,6 @@ internal final class AwesomeButtonStyleTransitionOwner {
       ) == .accepted
     else { return }
 
-    let timing = resolvedDirectStyleAnimationTiming(style: targetStyle)
     let workItem = DispatchWorkItem { [weak self, weak sink] in
       guard let self, self.generation == generation else { return }
       _ = sink?.receive(.animate(generation: generation, timing: timing))

@@ -86,6 +86,7 @@ internal struct AwesomeButtonResolvedConfiguration {
   let onProgressStart: (() -> Void)?
   let onProgressEnd: (() -> Void)?
   let animatesResolvedStyleChanges: Bool
+  let styleTransitionContext: AwesomeButtonStyleTransitionContext?
   let reduceMotion: Bool
   let dynamicTypeSize: DynamicTypeSize
   #if canImport(UIKit)
@@ -129,6 +130,7 @@ internal struct AwesomeButtonResolvedConfiguration {
     onProgressStart: (() -> Void)?,
     onProgressEnd: (() -> Void)?,
     animatesResolvedStyleChanges: Bool = true,
+    styleTransitionContext: AwesomeButtonStyleTransitionContext? = nil,
     reduceMotion: Bool = false,
     dynamicTypeSize: DynamicTypeSize = .large,
     nativeControlBridge: AwesomeButtonNativeControlBridge? = nil,
@@ -169,6 +171,7 @@ internal struct AwesomeButtonResolvedConfiguration {
     self.onProgressStart = onProgressStart
     self.onProgressEnd = onProgressEnd
     self.animatesResolvedStyleChanges = animatesResolvedStyleChanges
+    self.styleTransitionContext = styleTransitionContext
     self.reduceMotion = reduceMotion
     self.dynamicTypeSize = dynamicTypeSize
     self.nativeControlBridge = nativeControlBridge
@@ -258,6 +261,7 @@ internal struct AwesomeButtonResolvedConfiguration {
     hasher.combine(reduceMotion)
     hasher.combine(dynamicTypeSize)
     hasher.combine(style.visualSignature)
+    hasher.combine(styleTransitionContext)
     return hasher.finalize()
   }
 

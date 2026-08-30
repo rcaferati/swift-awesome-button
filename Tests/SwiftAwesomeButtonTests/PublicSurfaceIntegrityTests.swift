@@ -231,7 +231,7 @@ final class PublicSurfaceIntegrityTests: XCTestCase {
     XCTAssertEqual(awesomeButtonReleaseSpringDamping, 20)
   }
 
-  func testPreInterpolatedThemedFramesDoNotStartSecondInnerTransition() {
+  func testInternalStyleAnimationOptOutSuppressesAResolvedTransition() {
     let current = makeConfiguration(
       style: AwesomeButtonStyle(backgroundColor: .red),
       animatesResolvedStyleChanges: true
@@ -240,13 +240,13 @@ final class PublicSurfaceIntegrityTests: XCTestCase {
       style: AwesomeButtonStyle(backgroundColor: .blue),
       animatesResolvedStyleChanges: true
     )
-    let themedFrame = makeConfiguration(
+    let suppressed = makeConfiguration(
       style: AwesomeButtonStyle(backgroundColor: .blue),
       animatesResolvedStyleChanges: false
     )
 
     XCTAssertTrue(shouldAnimateResolvedStyleTransition(from: current, to: direct))
-    XCTAssertFalse(shouldAnimateResolvedStyleTransition(from: current, to: themedFrame))
+    XCTAssertFalse(shouldAnimateResolvedStyleTransition(from: current, to: suppressed))
   }
 
   private func presentation(

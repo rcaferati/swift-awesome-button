@@ -645,6 +645,41 @@ final class UIKitControlIntegrationTests: XCTestCase {
     XCTAssertEqual(actionEvents, ["down", "start", "up", "primary", "completion", "end"])
   }
 
+  func testThemedControlCompletesMediumLargeSmallLabelAndSizeCycles() {
+    let control = ThemedButtonControl(
+      child: "Medium",
+      size: .medium,
+      textTransition: true,
+      hapticOnPress: false
+    )
+    let originalHostedController = control.hostedViewController
+    let hosted = host(control)
+    defer { withExtendedLifetime(hosted) {} }
+
+    XCTAssertEqual(control.accessibilityLabel, "Medium")
+    XCTAssertEqual(control.intrinsicContentSize.width, 200, accuracy: 0.5)
+
+    var large = control.configuration
+    large.child = "Large"
+    large.size = .large
+    control.configuration = large
+    spinMainRunLoop(0.35)
+
+    XCTAssertTrue(control.hostedViewController === originalHostedController)
+    XCTAssertEqual(control.accessibilityLabel, "Large")
+    XCTAssertEqual(control.intrinsicContentSize.width, 250, accuracy: 0.5)
+
+    var small = control.configuration
+    small.child = "Small"
+    small.size = .small
+    control.configuration = small
+    spinMainRunLoop(0.35)
+
+    XCTAssertTrue(control.hostedViewController === originalHostedController)
+    XCTAssertEqual(control.accessibilityLabel, "Small")
+    XCTAssertEqual(control.intrinsicContentSize.width, 120, accuracy: 0.5)
+  }
+
   func testContainmentAttachDetachReparentAndDiscovery() {
     let firstParent = UIViewController()
     let secondParent = UIViewController()

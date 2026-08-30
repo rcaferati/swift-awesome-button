@@ -47,6 +47,8 @@ final class MeasurementAndBehaviorTests: XCTestCase {
       backgroundColor: .red,
       depthColor: .red,
       foregroundColor: .white,
+      textSize: 12,
+      textLineHeight: 18,
       borderRadius: 4,
       borderWidth: 0,
       borderColor: .red,
@@ -56,6 +58,8 @@ final class MeasurementAndBehaviorTests: XCTestCase {
       backgroundColor: .blue,
       depthColor: .blue,
       foregroundColor: .black,
+      textSize: 16,
+      textLineHeight: 24,
       borderRadius: 12,
       borderWidth: 2,
       borderColor: .blue,
@@ -79,6 +83,8 @@ final class MeasurementAndBehaviorTests: XCTestCase {
     XCTAssertEqual(mid.borderWidth ?? -1, 1, accuracy: 0.0001)
     XCTAssertEqual(mid.borderRadius ?? -1, 8, accuracy: 0.0001)
     XCTAssertEqual(mid.raiseAmount ?? -1, 8, accuracy: 0.0001)
+    XCTAssertEqual(mid.textSize ?? -1, 14, accuracy: 0.0001)
+    XCTAssertEqual(mid.textLineHeight ?? -1, 21, accuracy: 0.0001)
   }
 
   func testResolvedVisualStyleDoesNotInjectFallbackDisabledFillIntoTransparentFlatButtons() {
@@ -410,6 +416,45 @@ final class MeasurementAndBehaviorTests: XCTestCase {
 
     XCTAssertEqual(controller.contentClipAlignment, .center)
     XCTAssertGreaterThan(controller.resolvedWidth ?? 0, shortWidth ?? 0)
+  }
+
+  @MainActor
+  func testPlannedStringWidthIgnoresTransientRenderedTransitionMeasurements() {
+    let controller = AwesomeButtonController()
+    let nativeBridge = AwesomeButtonNativeControlBridge()
+    let sourceConfiguration = makeResolvedConfiguration(
+      text: "Launch",
+      animateSize: false,
+      textTransition: true,
+      nativeControlBridge: nativeBridge
+    )
+    let targetConfiguration = makeResolvedConfiguration(
+      text: "View analytics dashboard",
+      animateSize: true,
+      textTransition: true,
+      nativeControlBridge: nativeBridge
+    )
+
+    controller.update(configuration: sourceConfiguration)
+    controller.update(configuration: targetConfiguration)
+
+    let plannedTargetWidth = controller.resolvedWidth
+    XCTAssertNotNil(plannedTargetWidth)
+    XCTAssertEqual(nativeBridge.measuredAutoWidth, plannedTargetWidth)
+
+    controller.updateMeasuredAutoWidth(
+      max(1, (plannedTargetWidth ?? 0) - 48),
+      configuration: targetConfiguration
+    )
+    XCTAssertEqual(controller.resolvedWidth, plannedTargetWidth)
+    XCTAssertEqual(nativeBridge.measuredAutoWidth, plannedTargetWidth)
+
+    controller.updateMeasuredAutoWidth(
+      (plannedTargetWidth ?? 0) + 48,
+      configuration: targetConfiguration
+    )
+    XCTAssertEqual(controller.resolvedWidth, plannedTargetWidth)
+    XCTAssertEqual(nativeBridge.measuredAutoWidth, plannedTargetWidth)
   }
 
   @MainActor
@@ -789,6 +834,7 @@ final class MeasurementAndBehaviorTests: XCTestCase {
     controller.update(configuration: sourceConfiguration)
     controller.update(configuration: targetConfiguration)
 
+    XCTAssertEqual(controller.displayedText, "Secondary")
     XCTAssertEqual(controller.styleTransitionProgress, 0, accuracy: 0.0001)
     XCTAssertNotNil(controller.styleTransitionSourceStyle)
     XCTAssertEqual(
@@ -797,11 +843,109 @@ final class MeasurementAndBehaviorTests: XCTestCase {
 
     let kickoffExpectation = expectation(description: "style transition kickoff")
     DispatchQueue.main.async {
+      XCTAssertEqual(controller.displayedText, "Secondary")
       XCTAssertEqual(controller.styleTransitionProgress, 1, accuracy: 0.0001)
       kickoffExpectation.fulfill()
     }
 
     waitForExpectations(timeout: 0.1)
+  }
+
+  @MainActor
+  func testStyleFramesDoNotCancelAnActiveTextTransition() {
+    let controller = AwesomeButtonController()
+    let context = AwesomeButtonStyleTransitionContext(
+      sourceSignature: 77,
+      variant: ButtonVariant.primary.rawValue,
+      transparent: false
+    )
+    let source = makeResolvedConfiguration(
+      text: "Medium",
+      width: 200,
+      animateSize: false,
+      textTransition: true,
+      style: AwesomeButtonStyle(backgroundColor: .red, textSize: 14),
+      styleTransitionContext: context
+    )
+    let target = makeResolvedConfiguration(
+      text: "Large",
+      width: 250,
+      animateSize: true,
+      textTransition: true,
+      style: AwesomeButtonStyle(backgroundColor: .blue, textSize: 16),
+      styleTransitionContext: context
+    )
+    let sameTargetStyleUpdate = makeResolvedConfiguration(
+      text: "Large",
+      width: 250,
+      animateSize: true,
+      textTransition: true,
+      style: AwesomeButtonStyle(
+        backgroundColor: .green,
+        textSize: 16,
+        borderWidth: 2
+      ),
+      styleTransitionContext: context
+    )
+    let timeline = getTextTransitionTimeline(fromText: "Medium", targetText: "Large")
+
+    controller.update(configuration: source)
+    controller.update(configuration: target)
+    controller.update(configuration: sameTargetStyleUpdate)
+
+    let completionExpectation = expectation(
+      description: "style updates preserve the active text generation")
+    DispatchQueue.main.asyncAfter(
+      deadline: .now() + (Double(timeline.totalDurationMs) / 1000) + 0.08
+    ) {
+      XCTAssertEqual(controller.displayedText, "Large")
+      completionExpectation.fulfill()
+    }
+
+    waitForExpectations(timeout: (Double(timeline.totalDurationMs) / 1000) + 0.3)
+  }
+
+  @MainActor
+  func testThemedTextTransitionRecoversWhenItsTargetWasRecordedButNotDisplayed() {
+    let controller = AwesomeButtonController()
+    let context = AwesomeButtonStyleTransitionContext(
+      sourceSignature: 78,
+      variant: ButtonVariant.primary.rawValue,
+      transparent: false
+    )
+    let source = makeResolvedConfiguration(
+      text: "Medium",
+      width: 200,
+      animateSize: false,
+      textTransition: true,
+      style: AwesomeButtonStyle(backgroundColor: .red, textSize: 14),
+      styleTransitionContext: context
+    )
+    let target = makeResolvedConfiguration(
+      text: "Large",
+      width: 250,
+      animateSize: true,
+      textTransition: true,
+      style: AwesomeButtonStyle(backgroundColor: .blue, textSize: 16),
+      styleTransitionContext: context
+    )
+
+    controller.update(configuration: source)
+    controller.update(configuration: target)
+    controller.update(configuration: source)
+    controller.update(configuration: target)
+
+    let timeline = getTextTransitionTimeline(fromText: "Medium", targetText: "Large")
+    let completionExpectation = expectation(
+      description: "an inactive target resumes from the visible frame")
+    DispatchQueue.main.asyncAfter(
+      deadline: .now() + (Double(timeline.totalDurationMs) / 1000) + 0.08
+    ) {
+      XCTAssertEqual(controller.displayedText, "Large")
+      completionExpectation.fulfill()
+    }
+
+    waitForExpectations(timeout: (Double(timeline.totalDurationMs) / 1000) + 0.3)
   }
 }
 
@@ -816,7 +960,9 @@ private func makeResolvedConfiguration(
   onPress: AwesomeButtonPressCallback? = nil,
   onLongPress: (() -> Void)? = nil,
   onPressOut: (() -> Void)? = nil,
-  onPressedOut: (() -> Void)? = nil
+  onPressedOut: (() -> Void)? = nil,
+  nativeControlBridge: AwesomeButtonNativeControlBridge? = nil,
+  styleTransitionContext: AwesomeButtonStyleTransitionContext? = nil
 ) -> AwesomeButtonResolvedConfiguration {
   AwesomeButtonResolvedConfiguration(
     childText: text,
@@ -849,6 +995,8 @@ private func makeResolvedConfiguration(
     onPressedIn: nil,
     onPressedOut: onPressedOut,
     onProgressStart: nil,
-    onProgressEnd: nil
+    onProgressEnd: nil,
+    styleTransitionContext: styleTransitionContext,
+    nativeControlBridge: nativeControlBridge
   )
 }

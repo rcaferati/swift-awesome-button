@@ -45,10 +45,10 @@ private func resolveButtonType(
   type: ButtonVariant
 ) -> ButtonVariant {
   let requestedType: ButtonVariant
-  if disabled {
-    requestedType = .disabled
-  } else if flat || type == .flat {
+  if flat || type == .flat {
     requestedType = .flat
+  } else if disabled {
+    requestedType = .disabled
   } else {
     requestedType = type
   }

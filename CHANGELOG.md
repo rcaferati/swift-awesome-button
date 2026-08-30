@@ -33,6 +33,17 @@ the package version.
   width.
 - Public theme dimensions and pressed-overlay configuration now participate in
   rendering and sizing according to the documented precedence rules.
+- Explicitly requested flat visual styling remains flat while disabled;
+  disabled state still blocks activation.
+- Plain-string labels now replace immediately when `textTransition` is disabled,
+  without inheriting an independently animated visual-style transaction.
+- Animated plain-string labels no longer feed transient scramble-frame
+  measurements back into auto width, preventing reversal and overshoot while
+  preserving the planned source-to-target size choreography.
+- Theme and direct-style changes now share the inner button's single style
+  transition owner, so style updates cannot freeze an active plain-string text
+  transition. Resolved font size and line height interpolate explicitly, with a
+  restrained 4% midpoint bump when size animation is enabled.
 - `AwesomeButtonControl` and `ThemedButtonControl` remain supported public
   surfaces and now provide complete target-action, state, sizing, configuration,
   keyboard, and accessibility integration.

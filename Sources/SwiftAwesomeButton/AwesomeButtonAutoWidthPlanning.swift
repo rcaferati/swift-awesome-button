@@ -44,6 +44,7 @@ internal func resolveAutoWidthTextUpdatePlan(
   }
 
   let sourceText = displayedText ?? targetText
+  let shouldAnimateText = textTransition && sourceText != targetText
   let flow = resolveAutoWidthTextFlow(
     currentWidth: currentWidth,
     targetWidth: targetWidth
@@ -56,7 +57,7 @@ internal func resolveAutoWidthTextUpdatePlan(
     return .textOnly(
       sourceText: sourceText,
       targetText: targetText,
-      animateText: textTransition
+      animateText: shouldAnimateText
     )
   case .growFirst:
     return .growFirst(
@@ -70,7 +71,7 @@ internal func resolveAutoWidthTextUpdatePlan(
         slotStaggerMs: slotStaggerMs
       ),
       animateSize: animateSize,
-      animateText: textTransition
+      animateText: shouldAnimateText
     )
   case .shrinkLast:
     return .shrinkLast(
@@ -84,7 +85,7 @@ internal func resolveAutoWidthTextUpdatePlan(
         slotStaggerMs: slotStaggerMs
       ),
       animateSize: animateSize,
-      animateText: textTransition
+      animateText: shouldAnimateText
     )
   }
 }

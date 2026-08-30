@@ -111,13 +111,20 @@ AwesomeButton(
 - with `textTransition` plus auto width, wider labels animate text while
   growing and narrower labels start text first, then shrink width after the
   text transition begins
+- transient scramble frames never retarget auto width; the accepted source and
+  target measurements remain the size-animation endpoints
+- resolved font size and line height follow the same explicit style progress;
+  package-owned string labels add a restrained `1.00 → 1.04 → 1.00` scale bump
+  when the effective font size changes
 - `animateSize: false` keeps size changes instant
 - fixed-to-auto and auto-to-fixed changes remain instant
 
-Swift measures the single rendered label row for auto width. `before`, the
-label, `after`, padding, and border participate in that width; the face-overlay
-`extra` slot does not. Generic labels and placeholders use the face height as
-their initial and minimum auto width.
+Swift resolves plain-string auto width from the accepted target label so
+temporary text-transition frames cannot feed back into size animation. Custom
+content and auxiliary-slot rows use the single rendered row measurement.
+`before`, the label, `after`, padding, and border participate in that width; the
+face-overlay `extra` slot does not. Generic labels and placeholders use the face
+height as their initial and minimum auto width.
 
 ```swift
 import SwiftAwesomeButton
@@ -354,7 +361,7 @@ UIKit wrappers.
 | `showProgressBar` | `Bool` | `true` | Shows or hides the loading bar during progress. |
 | `progressLoadingTime` | `TimeInterval` | `3` | Duration of the loading bar travel in progress mode. |
 | `animateSize` | `Bool` | `true` | Animates fixed-size geometry changes and auto-width string-label changes. |
-| `textTransition` | `Bool` | `false` | Enables the built-in scramble/reveal animation when a plain string label changes. |
+| `textTransition` | `Bool` | `false` | Enables the built-in scramble/reveal animation when a plain string label changes. When false, label replacement snaps even while visual style changes animate. |
 | `animatedPlaceholder` | `Bool` | `true` | Enables the shimmer loop when the button has no child. |
 | `hapticOnPress` | `Bool` | `true` | Enables iOS haptic feedback on press. |
 | `accessibilityLabel` | `String?` | `nil` | Spoken identity override. Plain text and meaningful custom-label semantics are inferred when absent. |
@@ -370,7 +377,7 @@ UIKit wrappers.
 | `name` | `ThemeName?` | `nil` | Named built-in theme selector. |
 | `type` | `ButtonVariant` | `.primary` | Built-in variant to resolve from the selected theme. |
 | `size` | `ButtonSize` | `.medium` | Built-in theme size preset. |
-| `flat` | `Bool` | `false` | Requests the `flat` theme variant when available. |
+| `flat` | `Bool` | `false` | Requests the `flat` theme variant when available, including while disabled. |
 | `transparent` | `Bool` | `false` | Makes the visible shell layers transparent while keeping content, press, and progress feedback active. |
 | `autoWidth` | `Bool` | `false` | Requests measured auto width instead of the size preset width. |
 
@@ -379,9 +386,18 @@ UIKit wrappers.
 `pressInAnimationDuration` controls press-down timing when present.
 `animationDuration` is its fallback and also controls direct changes to an
 already-resolved `AwesomeButtonStyle`; `animationCurve` supplies the matching
-curve. Themed variant changes own a separate 200 ms interpolation and pass
-their frames to the inner button without a second style animation. Release is
-always owned by the package spring and ignores these duration fields.
+curve. The inner button is the single style-animation owner. Themed variant
+changes use 200 ms; same-variant themed changes use the resolved style duration.
+Release is always owned by the package spring and ignores these duration fields.
+
+For package-owned string labels, style progress explicitly interpolates the
+effective font size and line height. A font-size change gets a subtle 4% scale
+bump at the midpoint and settles at scale `1`. `animateSize: false` and Reduce
+Motion snap typography to the target with no bump. Custom label views remain
+consumer-owned and receive no manufactured font animation. Label identity is
+kept outside implicit style transactions: `textTransition: false` replaces a
+label immediately while colors, borders, depth, geometry, and explicit
+typography frames continue independently.
 
 Numeric inputs are normalized before geometry, animation, or accessibility
 consumes them. Non-finite optional values act as absent and continue normal

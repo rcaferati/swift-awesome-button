@@ -15,11 +15,11 @@
       public var index: Int?
       /// An optional built-in theme name.
       public var name: ThemeName?
-      /// The requested semantic or social variant.
+      /// The requested semantic or social variant; `.flat` remains visually flat while disabled.
       public var type: ButtonVariant
       /// The requested named size.
       public var size: ButtonSize
-      /// Requests flat styling unless disabled styling overrides it.
+      /// Requests flat visual styling, including while disabled.
       public var flat: Bool
       /// Removes visual paint while retaining interaction geometry.
       public var transparent: Bool

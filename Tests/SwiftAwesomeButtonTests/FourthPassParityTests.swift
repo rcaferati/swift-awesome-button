@@ -185,6 +185,194 @@ final class FourthPassParityTests: XCTestCase {
     )
   }
 
+  func testThemedStyleTimingUsesVariantAndSameVariantDurations() {
+    let sourceContext = AwesomeButtonStyleTransitionContext(
+      sourceSignature: 42,
+      variant: ButtonVariant.primary.rawValue,
+      transparent: false
+    )
+    let source = pass4Configuration(
+      style: AwesomeButtonStyle(backgroundColor: .red, textSize: 12),
+      styleTransitionContext: sourceContext
+    )
+    let sameVariant = pass4Configuration(
+      style: AwesomeButtonStyle(
+        backgroundColor: .blue,
+        textSize: 16,
+        animationDuration: 0.37
+      ),
+      styleTransitionContext: sourceContext
+    )
+    let changedVariant = pass4Configuration(
+      style: AwesomeButtonStyle(
+        backgroundColor: .green,
+        textSize: 18,
+        animationDuration: 0.37
+      ),
+      styleTransitionContext: AwesomeButtonStyleTransitionContext(
+        sourceSignature: 42,
+        variant: ButtonVariant.secondary.rawValue,
+        transparent: false
+      )
+    )
+
+    XCTAssertEqual(
+      resolvedStyleTransitionTiming(from: source, to: sameVariant),
+      AwesomeButtonAnimationTiming(duration: 0.37, curve: .easeOut)
+    )
+    XCTAssertEqual(
+      resolvedStyleTransitionTiming(from: sameVariant, to: changedVariant),
+      AwesomeButtonAnimationTiming(duration: 0.2, curve: .easeOut)
+    )
+  }
+
+  func testThemedStyleTimingSnapsAcrossThemeSourcesAndReducedMotion() {
+    let source = pass4Configuration(
+      style: AwesomeButtonStyle(backgroundColor: .red, textSize: 12),
+      styleTransitionContext: AwesomeButtonStyleTransitionContext(
+        sourceSignature: 1,
+        variant: ButtonVariant.primary.rawValue,
+        transparent: false
+      )
+    )
+    let changedSource = pass4Configuration(
+      style: AwesomeButtonStyle(backgroundColor: .blue, textSize: 16),
+      styleTransitionContext: AwesomeButtonStyleTransitionContext(
+        sourceSignature: 2,
+        variant: ButtonVariant.primary.rawValue,
+        transparent: false
+      )
+    )
+    let reducedMotion = pass4Configuration(
+      style: AwesomeButtonStyle(backgroundColor: .blue, textSize: 16),
+      styleTransitionContext: source.styleTransitionContext,
+      reduceMotion: true
+    )
+
+    XCTAssertNil(resolvedStyleTransitionTiming(from: source, to: changedSource))
+    XCTAssertNil(resolvedStyleTransitionTiming(from: source, to: reducedMotion))
+  }
+
+  func testTypographyBumpPeaksAtFourPercentAndSettlesAtEndpoints() {
+    XCTAssertEqual(
+      awesomeButtonTypographyTransitionScale(
+        sourceTextSize: 12,
+        targetTextSize: 16,
+        progress: 0,
+        animateSize: true,
+        reduceMotion: false
+      ),
+      1,
+      accuracy: 0.0001
+    )
+    XCTAssertEqual(
+      awesomeButtonTypographyTransitionScale(
+        sourceTextSize: 12,
+        targetTextSize: 16,
+        progress: 0.5,
+        animateSize: true,
+        reduceMotion: false
+      ),
+      1.04,
+      accuracy: 0.0001
+    )
+    XCTAssertEqual(
+      awesomeButtonTypographyTransitionScale(
+        sourceTextSize: 12,
+        targetTextSize: 16,
+        progress: 1,
+        animateSize: true,
+        reduceMotion: false
+      ),
+      1,
+      accuracy: 0.0001
+    )
+  }
+
+  func testTypographyFrameInterpolatesFontSizeLineHeightAndDynamicTypeInputs() {
+    let frame = resolvedAwesomeButtonTypographyFrame(
+      sourceStyle: AwesomeButtonStyle(textSize: 12, textLineHeight: 18),
+      targetStyle: AwesomeButtonStyle(textSize: 16, textLineHeight: 24),
+      progress: 0.5,
+      animateSize: true,
+      reduceMotion: false
+    )
+
+    XCTAssertEqual(frame.textSize, 14, accuracy: 0.0001)
+    XCTAssertEqual(frame.lineHeight, 21, accuracy: 0.0001)
+    XCTAssertEqual(frame.scale, 1.04, accuracy: 0.0001)
+    XCTAssertGreaterThan(
+      awesomeButtonScaledTextSize(frame.textSize, dynamicTypeSize: .accessibility3),
+      awesomeButtonScaledTextSize(frame.textSize, dynamicTypeSize: .large)
+    )
+    XCTAssertGreaterThan(
+      awesomeButtonScaledTextSize(frame.lineHeight, dynamicTypeSize: .accessibility3),
+      awesomeButtonScaledTextSize(frame.lineHeight, dynamicTypeSize: .large)
+    )
+  }
+
+  func testTypographyFrameSnapsToTargetWhenSizeAnimationIsDisabledOrMotionIsReduced() {
+    let source = AwesomeButtonStyle(textSize: 12, textLineHeight: 18)
+    let target = AwesomeButtonStyle(textSize: 16, textLineHeight: 24)
+    let sizeOptOut = resolvedAwesomeButtonTypographyFrame(
+      sourceStyle: source,
+      targetStyle: target,
+      progress: 0.5,
+      animateSize: false,
+      reduceMotion: false
+    )
+    let reducedMotion = resolvedAwesomeButtonTypographyFrame(
+      sourceStyle: source,
+      targetStyle: target,
+      progress: 0.5,
+      animateSize: true,
+      reduceMotion: true
+    )
+
+    XCTAssertEqual(
+      sizeOptOut,
+      AwesomeButtonTypographyFrame(
+        textSize: 16,
+        lineHeight: 24,
+        fontFamily: nil,
+        scale: 1
+      ))
+    XCTAssertEqual(reducedMotion, sizeOptOut)
+  }
+
+  func testTypographyBumpIsDisabledForEqualSizesSizeOptOutAndReducedMotion() {
+    XCTAssertEqual(
+      awesomeButtonTypographyTransitionScale(
+        sourceTextSize: 14,
+        targetTextSize: 14,
+        progress: 0.5,
+        animateSize: true,
+        reduceMotion: false
+      ),
+      1
+    )
+    XCTAssertEqual(
+      awesomeButtonTypographyTransitionScale(
+        sourceTextSize: 12,
+        targetTextSize: 16,
+        progress: 0.5,
+        animateSize: false,
+        reduceMotion: false
+      ),
+      1
+    )
+    XCTAssertEqual(
+      awesomeButtonTypographyTransitionScale(
+        sourceTextSize: 12,
+        targetTextSize: 16,
+        progress: 0.5,
+        animateSize: true,
+        reduceMotion: true
+      ),
+      1
+    )
+  }
+
   func testPhysicalHapticOccursAfterPressInAndPressedCommitBeforePressedIn() {
     var events: [String] = []
     var controller: AwesomeButtonController!
@@ -247,7 +435,10 @@ private func pass4Configuration(
   disabled: Bool = false,
   hapticOnPress: Bool = false,
   onPressIn: (() -> Void)? = nil,
-  onPressedIn: (() -> Void)? = nil
+  onPressedIn: (() -> Void)? = nil,
+  style: AwesomeButtonStyle = AwesomeButtonThemeData.fallbackStyle,
+  styleTransitionContext: AwesomeButtonStyleTransitionContext? = nil,
+  reduceMotion: Bool = false
 ) -> AwesomeButtonResolvedConfiguration {
   AwesomeButtonResolvedConfiguration(
     childText: "Button",
@@ -264,7 +455,7 @@ private func pass4Configuration(
     paddingTop: 0,
     paddingBottom: 0,
     stretch: false,
-    style: AwesomeButtonThemeData.fallbackStyle,
+    style: style,
     activeOpacity: 1,
     debouncedPressTime: 0,
     progress: false,
@@ -280,6 +471,8 @@ private func pass4Configuration(
     onPressedIn: onPressedIn,
     onPressedOut: nil,
     onProgressStart: nil,
-    onProgressEnd: nil
+    onProgressEnd: nil,
+    styleTransitionContext: styleTransitionContext,
+    reduceMotion: reduceMotion
   )
 }
