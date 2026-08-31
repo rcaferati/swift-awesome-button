@@ -4,17 +4,26 @@
 
 Swift Awesome Button is distributed under the MIT License. See `LICENSE`.
 
-## Example App Social Icons
+## Example App Icons
 
-The social icon SVG assets in `Examples/IOSAwesomeButtonDemoApp/Resources/SocialIcons.xcassets`
-are derived from Phosphor Icons and used in the demo app as Xcode template
-images.
+The interface and social icon SVG assets in
+`Examples/IOSAwesomeButtonDemoApp/Resources/DemoIcons.xcassets` are selected
+from Font Awesome Free 7.3.1, copyright Fonticons, Inc., and are used as Xcode
+template images. Their source path geometry and view boxes are retained
+unchanged; only the platform-native asset-catalog representation differs.
 
-Phosphor Icons is distributed under the MIT License:
-https://github.com/phosphor-icons/core
+Font Awesome Free icons are licensed under CC BY 4.0:
+https://creativecommons.org/licenses/by/4.0/
+
+The Font Awesome Free license is available at:
+https://fontawesome.com/license/free
+
+The complete supplied license is retained at
+`Examples/IOSAwesomeButtonDemoApp/Resources/FontAwesome/LICENSE.txt`.
 
 Brand names and logos shown in the example app are trademarks of their
-respective owners. Their inclusion is only for demonstrating button styling.
+respective owners. Their inclusion is solely for demonstrating button styling
+and does not imply endorsement or affiliation.
 
 ## Example App Character Artwork
 

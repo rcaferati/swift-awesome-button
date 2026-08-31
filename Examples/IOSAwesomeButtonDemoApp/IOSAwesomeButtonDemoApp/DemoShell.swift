@@ -1,6 +1,45 @@
 import SwiftUI
 import SwiftAwesomeButton
 
+private enum DemoIconName: String {
+    case paintbrush = "fa-paintbrush"
+    case gauge = "fa-gauge"
+    case shareNodes = "fa-share-nodes"
+    case sizeChanges = "fa-up-right-and-down-left-from-center"
+    case rightLeft = "fa-right-left"
+    case forwardStep = "fa-forward-step"
+    case bars = "fa-bars"
+    case tableCellsLarge = "fa-table-cells-large"
+    case trashCan = "fa-trash-can"
+    case squarePlus = "fa-square-plus"
+    case userPlus = "fa-user-plus"
+    case locationArrow = "fa-location-arrow"
+    case facebook = "fa-facebook-f"
+    case x = "fa-x-twitter"
+    case messenger = "fa-facebook-messenger"
+    case instagram = "fa-instagram"
+    case whatsapp = "fa-whatsapp"
+    case youtube = "fa-youtube"
+    case linkedin = "fa-linkedin-in"
+    case pinterest = "fa-pinterest-p"
+}
+
+private struct DemoIcon: View {
+    let name: DemoIconName
+    let size: CGFloat
+    let color: Color
+
+    var body: some View {
+        Image(name.rawValue)
+            .renderingMode(.template)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size, alignment: .center)
+            .foregroundStyle(color)
+            .accessibilityHidden(true)
+    }
+}
+
 private enum DemoTab: Int, CaseIterable {
     case themed
     case progress
@@ -53,25 +92,41 @@ struct DemoShell: View {
                 TabView(selection: $selectedTab) {
                     themedTab
                         .tabItem {
-                            Label("Themed", systemImage: "paintbrush.fill")
+                            Label {
+                                Text("Themed")
+                            } icon: {
+                                DemoIcon(name: .paintbrush, size: 21, color: .primary)
+                            }
                         }
                         .tag(DemoTab.themed)
 
                     ProgressScreen()
                         .tabItem {
-                            Label("Progress", systemImage: "gauge.medium")
+                            Label {
+                                Text("Progress")
+                            } icon: {
+                                DemoIcon(name: .gauge, size: 21, color: .primary)
+                            }
                         }
                         .tag(DemoTab.progress)
 
                     SocialScreen()
                         .tabItem {
-                            Label("Social", systemImage: "shareplay")
+                            Label {
+                                Text("Social")
+                            } icon: {
+                                DemoIcon(name: .shareNodes, size: 21, color: .primary)
+                            }
                         }
                         .tag(DemoTab.social)
 
                     SizeChangesScreen()
                         .tabItem {
-                            Label("Size Changes", systemImage: "arrow.up.left.and.arrow.down.right")
+                            Label {
+                                Text("Size Changes")
+                            } icon: {
+                                DemoIcon(name: .sizeChanges, size: 21, color: .primary)
+                            }
                         }
                         .tag(DemoTab.sizeChanges)
                 }
@@ -391,7 +446,8 @@ private struct ThemedButtonsScreen: View {
                                 flatIconButton(
                                     themeName: theme.name,
                                     color: primaryButtonColor,
-                                    systemName: "arrow.left.arrow.right",
+                                    icon: .rightLeft,
+                                    accessibilityLabel: "Cycle variant",
                                     action: advanceVariant
                                 )
                             }
@@ -406,7 +462,8 @@ private struct ThemedButtonsScreen: View {
                                 flatIconButton(
                                     themeName: theme.name,
                                     color: primaryButtonColor,
-                                    systemName: "arrow.left.arrow.right",
+                                    icon: .forwardStep,
+                                    accessibilityLabel: "Cycle text",
                                     action: advanceTextTransition
                                 )
                             }
@@ -421,7 +478,8 @@ private struct ThemedButtonsScreen: View {
                                 flatIconButton(
                                     themeName: theme.name,
                                     color: primaryButtonColor,
-                                    systemName: "arrow.left.arrow.right",
+                                    icon: .forwardStep,
+                                    accessibilityLabel: "Cycle size",
                                     action: advanceSizeTransition
                                 )
                             }
@@ -460,26 +518,50 @@ private struct ThemedButtonsScreen: View {
 
                     DemoSection(title: "Before / After / Icon", headerWidthFactor: sectionHeaderWidthFactor) {
                         sectionButton {
-                            themedTextButton("Button Icon", name: theme.name, type: .primary, before: iconView("sidebar.leading", color: buttonTextColor(themeName: theme.name, type: .primary)))
+                            themedTextButton(
+                                "Button Icon",
+                                name: theme.name,
+                                type: .primary,
+                                style: AwesomeButtonStyle(contentGap: 8),
+                                before: iconView(.bars, color: buttonTextColor(themeName: theme.name, type: .primary))
+                            )
                         }
                         sectionButton {
-                            themedTextButton("Button Icon", name: theme.name, type: .anchor, after: iconView("square.grid.2x2", color: buttonTextColor(themeName: theme.name, type: .anchor)))
+                            themedTextButton(
+                                "Button Icon",
+                                name: theme.name,
+                                type: .anchor,
+                                style: AwesomeButtonStyle(contentGap: 8),
+                                after: iconView(.tableCellsLarge, color: buttonTextColor(themeName: theme.name, type: .anchor))
+                            )
                         }
                         sectionButton {
-                            themedTextButton("Button Icon", name: theme.name, type: .danger, onPress: delayedCompletion(seconds: 0.5), progress: true, before: iconView("trash.fill", color: buttonTextColor(themeName: theme.name, type: .danger)))
+                            themedTextButton(
+                                "Button Icon",
+                                name: theme.name,
+                                type: .danger,
+                                onPress: delayedCompletion(seconds: 0.5),
+                                style: AwesomeButtonStyle(contentGap: 8),
+                                progress: true,
+                                before: iconView(.trashCan, color: buttonTextColor(themeName: theme.name, type: .danger))
+                            )
                         }
                         sectionButton {
-                            ThemedButton(name: theme.name, type: .primary, size: .icon) {
-                                Image(systemName: "plus.square")
-                                    .font(.system(size: 21, weight: .semibold))
-                                    .foregroundStyle(buttonTextColor(themeName: theme.name, type: .primary))
+                            ThemedButton(name: theme.name, type: .primary, size: .icon, accessibilityLabel: "Add") {
+                                DemoIcon(
+                                    name: .squarePlus,
+                                    size: 24,
+                                    color: buttonTextColor(themeName: theme.name, type: .primary)
+                                )
                             }
                         }
                         sectionButton {
-                            ThemedButton(name: theme.name, type: .anchor, size: .icon) {
-                                Image(systemName: "person.badge.plus")
-                                    .font(.system(size: 21, weight: .semibold))
-                                    .foregroundStyle(buttonTextColor(themeName: theme.name, type: .anchor))
+                            ThemedButton(name: theme.name, type: .anchor, size: .icon, accessibilityLabel: "Add user") {
+                                DemoIcon(
+                                    name: .userPlus,
+                                    size: 24,
+                                    color: buttonTextColor(themeName: theme.name, type: .anchor)
+                                )
                             }
                         }
                         sectionButton {
@@ -487,12 +569,15 @@ private struct ThemedButtonsScreen: View {
                                 name: theme.name,
                                 type: .danger,
                                 size: .icon,
+                                accessibilityLabel: "Delete",
                                 onPress: delayedCompletion(seconds: 0.5),
                                 progress: true
                             ) {
-                                Image(systemName: "trash.fill")
-                                    .font(.system(size: 21, weight: .semibold))
-                                    .foregroundStyle(buttonTextColor(themeName: theme.name, type: .danger))
+                                DemoIcon(
+                                    name: .trashCan,
+                                    size: 24,
+                                    color: buttonTextColor(themeName: theme.name, type: .danger)
+                                )
                             }
                         }
                     }
@@ -562,13 +647,16 @@ private struct ProgressScreen: View {
                             name: themeName,
                             type: .anchor,
                             size: .icon,
+                            accessibilityLabel: "Send",
                             onPress: delayedCompletion(seconds: 1),
                             style: AwesomeButtonStyle(borderRadius: 30, raiseAmount: 6),
                             progress: true
                         ) {
-                            Image(systemName: "paperplane.fill")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundStyle(buttonTextColor(themeName: themeName, type: .anchor))
+                            DemoIcon(
+                                name: .locationArrow,
+                                size: 24,
+                                color: buttonTextColor(themeName: themeName, type: .anchor)
+                            )
                         }
                     }
                     sectionButton {
@@ -576,13 +664,16 @@ private struct ProgressScreen: View {
                             name: themeName,
                             type: .secondary,
                             size: .icon,
+                            accessibilityLabel: "Facebook",
                             onPress: delayedCompletion(seconds: 1),
                             style: AwesomeButtonStyle(borderRadius: 30, raiseAmount: 0),
                             progress: true
                         ) {
-                            Text("f")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundStyle(buttonTextColor(themeName: themeName, type: .secondary))
+                            DemoIcon(
+                                name: .facebook,
+                                size: 24,
+                                color: buttonTextColor(themeName: themeName, type: .secondary)
+                            )
                         }
                     }
                 }
@@ -605,9 +696,9 @@ private struct SocialScreen: View {
                             type: .facebook,
                             onPress: delayedCompletion(seconds: 1),
                             width: 180,
-                            style: AwesomeButtonStyle(borderRadius: 50, raiseAmount: 8),
+                            style: AwesomeButtonStyle(borderRadius: 50, raiseAmount: 8, contentGap: 8),
                             progress: true,
-                            before: socialBrandIconView(.facebook, size: 24, trailingPadding: 8)
+                            before: iconView(.facebook, color: buttonTextColor(themeName: themeName, type: .facebook))
                         )
                     }
                     sectionButton {
@@ -617,9 +708,9 @@ private struct SocialScreen: View {
                             type: .linkedin,
                             onPress: delayedCompletion(seconds: 1),
                             width: 180,
-                            style: AwesomeButtonStyle(borderRadius: 8, raiseAmount: 8),
+                            style: AwesomeButtonStyle(borderRadius: 8, raiseAmount: 8, contentGap: 8),
                             progress: true,
-                            before: socialBrandIconView(.linkedin, size: 22, trailingPadding: 8)
+                            before: iconView(.linkedin, color: buttonTextColor(themeName: themeName, type: .linkedin))
                         )
                     }
                     sectionButton {
@@ -629,9 +720,9 @@ private struct SocialScreen: View {
                             type: .messenger,
                             onPress: delayedCompletion(seconds: 1),
                             width: 180,
-                            style: AwesomeButtonStyle(borderRadius: 0, raiseAmount: 6),
+                            style: AwesomeButtonStyle(borderRadius: 0, raiseAmount: 6, contentGap: 8),
                             progress: true,
-                            before: socialBrandIconView(.messenger, size: 22, trailingPadding: 8)
+                            before: iconView(.messenger, color: buttonTextColor(themeName: themeName, type: .messenger))
                         )
                     }
                     sectionButton {
@@ -644,10 +735,11 @@ private struct SocialScreen: View {
                                 backgroundActive: Color.black.opacity(0.15),
                                 backgroundProgress: Color.black.opacity(0.15),
                                 depthColor: Color(red: 0.92, green: 0.67, blue: 0.12),
-                                shadowColor: Color.black.opacity(0.15)
+                                shadowColor: Color.black.opacity(0.15),
+                                contentGap: 8
                             ),
                             progress: true,
-                            before: socialBrandIconView(.instagram, size: 22, trailingPadding: 8),
+                            before: iconView(.instagram, color: .white),
                             extra: instagramGradientView()
                         )
                     }
@@ -658,49 +750,69 @@ private struct SocialScreen: View {
                         ThemedButton(
                             name: themeName,
                             type: .whatsapp,
+                            accessibilityLabel: "WhatsApp",
                             onPress: delayedCompletion(seconds: 1),
                             width: 60,
                             style: AwesomeButtonStyle(borderRadius: 0, raiseAmount: 0),
                             progress: true
                         ) {
-                            socialBrandIcon(.whatsapp, color: buttonTextColor(themeName: themeName, type: .whatsapp), size: 23)
+                            DemoIcon(
+                                name: .whatsapp,
+                                size: 24,
+                                color: buttonTextColor(themeName: themeName, type: .whatsapp)
+                            )
                         }
                     }
                     sectionButton {
                         ThemedButton(
                             name: themeName,
                             type: .youtube,
+                            accessibilityLabel: "YouTube",
                             onPress: delayedCompletion(seconds: 1),
                             width: 60,
                             style: AwesomeButtonStyle(borderRadius: 0, raiseAmount: 8),
                             progress: true
                         ) {
-                            socialBrandIcon(.youtube, color: buttonTextColor(themeName: themeName, type: .youtube), size: 23)
+                            DemoIcon(
+                                name: .youtube,
+                                size: 24,
+                                color: buttonTextColor(themeName: themeName, type: .youtube)
+                            )
                         }
                     }
                     sectionButton {
                         ThemedButton(
                             name: themeName,
                             type: .x,
+                            accessibilityLabel: "X",
                             onPress: delayedCompletion(seconds: 1),
                             width: 60,
                             style: AwesomeButtonStyle(borderRadius: 8, raiseAmount: 8),
                             progress: true
                         ) {
-                            socialBrandIcon(.x, color: buttonTextColor(themeName: themeName, type: .x), size: 23)
+                            DemoIcon(
+                                name: .x,
+                                size: 24,
+                                color: buttonTextColor(themeName: themeName, type: .x)
+                            )
                         }
                     }
                     sectionButton {
                         ThemedButton(
                             name: themeName,
                             type: .pinterest,
+                            accessibilityLabel: "Pinterest",
                             onPress: delayedCompletion(seconds: 1),
                             width: 60,
                             height: 60,
                             style: AwesomeButtonStyle(borderRadius: 80, raiseAmount: 8),
                             progress: true
                         ) {
-                            socialBrandIcon(.pinterest, color: buttonTextColor(themeName: themeName, type: .pinterest), size: 23)
+                            DemoIcon(
+                                name: .pinterest,
+                                size: 24,
+                                color: buttonTextColor(themeName: themeName, type: .pinterest)
+                            )
                         }
                     }
                 }
@@ -920,18 +1032,23 @@ private func delayedCompletion(seconds: Double) -> AwesomeButtonPressCallback {
     }
 }
 
-private func flatIconButton(themeName: ThemeName, color: Color, systemName: String, action: @escaping () -> Void) -> some View {
+private func flatIconButton(
+    themeName: ThemeName,
+    color: Color,
+    icon: DemoIconName,
+    accessibilityLabel: String,
+    action: @escaping () -> Void
+) -> some View {
     ThemedButton(
         name: themeName,
         type: .flat,
         size: .icon,
+        accessibilityLabel: accessibilityLabel,
         onPress: { _ in
             action()
         }
     ) {
-        Image(systemName: systemName)
-            .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(color)
+        DemoIcon(name: icon, size: 18, color: color)
     }
 }
 
@@ -942,6 +1059,7 @@ private func themedTextButton(
     size: ButtonSize = .medium,
     flat: Bool = false,
     textTransition: Bool = false,
+    accessibilityLabel: String? = nil,
     onPress: AwesomeButtonPressCallback? = nil,
     onPressOut: (() -> Void)? = nil,
     onPressedOut: (() -> Void)? = nil,
@@ -967,6 +1085,7 @@ private func themedTextButton(
         size: size,
         flat: flat,
         textTransition: textTransition,
+        accessibilityLabel: accessibilityLabel,
         onPress: onPress,
         disabled: disabled,
         width: width,
@@ -1003,75 +1122,10 @@ private func buttonTextColor(themeName: ThemeName, type: ButtonVariant) -> Color
     return theme.buttons[type]?.textColor ?? theme.color
 }
 
-private func iconView(_ systemName: String, color: Color, size: CGFloat = 21) -> AnyView {
+private func iconView(_ name: DemoIconName, color: Color, size: CGFloat = 24) -> AnyView {
     AnyView(
-        Image(systemName: systemName)
-            .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(color)
-            .padding(.trailing, 5)
+        DemoIcon(name: name, size: size, color: color)
     )
-}
-
-private enum SocialBrand {
-    case facebook
-    case x
-    case messenger
-    case instagram
-    case whatsapp
-    case youtube
-    case linkedin
-    case pinterest
-
-    var assetName: String {
-        switch self {
-        case .facebook:
-            "facebook-logo-fill"
-        case .x:
-            "x-logo-fill"
-        case .messenger:
-            "messenger-logo-fill"
-        case .instagram:
-            "instagram-logo-fill"
-        case .whatsapp:
-            "whatsapp-logo-fill"
-        case .youtube:
-            "youtube-logo-fill"
-        case .linkedin:
-            "linkedin-logo-fill"
-        case .pinterest:
-            "pinterest-logo-fill"
-        }
-    }
-}
-
-private func socialBrandIconView(
-    _ brand: SocialBrand,
-    color: Color = .white,
-    size: CGFloat = 21,
-    trailingPadding: CGFloat = 0
-) -> AnyView {
-    AnyView(
-        socialBrandIcon(brand, color: color, size: size, trailingPadding: trailingPadding)
-    )
-}
-
-private func socialBrandIcon(
-    _ brand: SocialBrand,
-    color: Color = .white,
-    size: CGFloat = 21,
-    trailingPadding: CGFloat = 0
-) -> some View {
-    socialBrandImage(brand)
-        .renderingMode(.template)
-        .resizable()
-        .frame(width: size, height: size)
-        .aspectRatio(contentMode: .fit)
-        .foregroundStyle(color)
-        .padding(.trailing, trailingPadding)
-}
-
-private func socialBrandImage(_ brand: SocialBrand) -> Image {
-    Image(brand.assetName)
 }
 
 private func instagramGradientView() -> AnyView {

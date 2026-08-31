@@ -11,7 +11,7 @@
 		26D81F8D1C6C7D03B29DB1CC /* bojack.png in Resources */ = {isa = PBXBuildFile; fileRef = F113E49229BE4C8A3B4AD404 /* bojack.png */; };
 		26F4D6FEBEA4D285B9C47E48 /* IOSAwesomeButtonDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9EA2204212E9886EF30AB5 /* IOSAwesomeButtonDemoApp.swift */; };
 		64916BB9B4F33486495B15F0 /* mysterion.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7F5365C4FB976BC451A34A /* mysterion.png */; };
-		7AC9E2F3A4B5C6D7E8F90123 /* SocialIcons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8BD0E1F2A3B4C5D6E7F80912 /* SocialIcons.xcassets */; };
+		7AC9E2F3A4B5C6D7E8F90123 /* DemoIcons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8BD0E1F2A3B4C5D6E7F80912 /* DemoIcons.xcassets */; };
 		756E9667CAB01D76134F465B /* summer.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB8F7AAD996DF53EAE50CC8 /* summer.png */; };
 		A79BD899AD9548FC8B5C247A /* ThemeCharacterOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106E73981CBEDFA7BD8F88EA /* ThemeCharacterOverlay.swift */; };
 		A8837DE1AFE03D26ADAA85B3 /* cartman.png in Resources */ = {isa = PBXBuildFile; fileRef = 41FE9D77D307D95B7DF604A1 /* cartman.png */; };
@@ -28,7 +28,7 @@
 		41FE9D77D307D95B7DF604A1 /* cartman.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = cartman.png; sourceTree = "<group>"; };
 		6B7E3215BBEA14C30B13F692 /* rick.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = rick.png; sourceTree = "<group>"; };
 		7D561381AE5151BAC03EEE0E /* IOSAwesomeButtonDemoApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOSAwesomeButtonDemoApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		8BD0E1F2A3B4C5D6E7F80912 /* SocialIcons.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = SocialIcons.xcassets; sourceTree = "<group>"; };
+		8BD0E1F2A3B4C5D6E7F80912 /* DemoIcons.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DemoIcons.xcassets; sourceTree = "<group>"; };
 		8AB3E1B45F9C1D601CC5A3F1 /* batman.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = batman.png; sourceTree = "<group>"; };
 		9C7F5365C4FB976BC451A34A /* mysterion.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = mysterion.png; sourceTree = "<group>"; };
 		9C9EA2204212E9886EF30AB5 /* IOSAwesomeButtonDemoApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = IOSAwesomeButtonDemoApp.swift; sourceTree = "<group>"; };
@@ -65,7 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				989DED51456A752096CC378D /* Characters */,
-				8BD0E1F2A3B4C5D6E7F80912 /* SocialIcons.xcassets */,
+				8BD0E1F2A3B4C5D6E7F80912 /* DemoIcons.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -178,7 +178,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				07CD50466C309B073BD83615 /* batman.png in Resources */,
-				7AC9E2F3A4B5C6D7E8F90123 /* SocialIcons.xcassets in Resources */,
+				7AC9E2F3A4B5C6D7E8F90123 /* DemoIcons.xcassets in Resources */,
 				26D81F8D1C6C7D03B29DB1CC /* bojack.png in Resources */,
 				DD20FE6A17A32B6CC5EE94A8 /* c137.png in Resources */,
 				A8837DE1AFE03D26ADAA85B3 /* cartman.png in Resources */,
