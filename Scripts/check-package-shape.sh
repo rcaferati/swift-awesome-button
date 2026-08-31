@@ -40,6 +40,7 @@ required_paths=(
   "Package.swift"
   "README.md"
   "RELEASE_NOTES_1.0.0.md"
+  "RELEASE_NOTES_1.1.0.md"
   "Scripts/check-api-compatibility.sh"
   "Scripts/generate-api-baseline-candidate.sh"
   "Scripts/normalize-api-baseline.swift"
@@ -59,7 +60,7 @@ for required_path in "${required_paths[@]}"; do
 done
 
 unexpected_path="$(awk '
-  /^(\.gitignore|API_COMPATIBILITY\.md|CHANGELOG\.md|CONTRIBUTING\.md|LICENSE|NOTICE\.md|PERFORMANCE\.md|Package\.swift|README\.md|RELEASE_NOTES_1\.0\.0\.md|api-breakage-allowlist\.txt)$/ { next }
+  /^(\.gitignore|API_COMPATIBILITY\.md|CHANGELOG\.md|CONTRIBUTING\.md|LICENSE|NOTICE\.md|PERFORMANCE\.md|Package\.swift|README\.md|RELEASE_NOTES_1\.(0\.0|1\.0)\.md|api-breakage-allowlist\.txt)$/ { next }
   /^\.github\/workflows\/ci\.yml$/ { next }
   /^API\/SwiftAwesomeButton-v1\.0\.0-arm64-apple-ios-simulator\.json(\.sha256)?$/ { next }
   /^Scripts\/(check-api-compatibility\.sh|check-package-shape\.sh|check-public-documentation\.swift|generate-api-baseline-candidate\.sh|normalize-api-baseline\.swift|release-preflight\.sh|test-api-compatibility-gate\.sh|validate-api-baseline\.swift)$/ { next }
