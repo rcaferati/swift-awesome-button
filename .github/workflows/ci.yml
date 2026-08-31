@@ -1,0 +1,80 @@
+name: Package CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Swift package quality
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+      AWESOME_BUTTON_SIMULATOR_NAME: iPhone 17 Pro
+      AWESOME_BUTTON_SIMULATOR_OS: '26.2'
+      AWESOME_BUTTON_ARTIFACTS_DIR: ${{ runner.temp }}/swift-awesome-button-artifacts
+    steps:
+      - name: Checkout source and immutable tags
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Verify Xcode, Swift, SDK, and simulator pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$DEVELOPER_DIR/usr/bin/xcodebuild"
+          xcodebuild -version
+          xcodebuild -version | grep -Fx 'Xcode 26.2'
+          xcrun swift --version | grep -F 'Swift version 6.2'
+          xcrun --sdk iphonesimulator --show-sdk-version | grep -Fx '26.2'
+          xcrun simctl list runtimes available
+          xcrun simctl list devices available -j | jq -e '
+            [.devices["com.apple.CoreSimulator.SimRuntime.iOS-26-2"][]
+              | select(.name == "iPhone 17 Pro" and .isAvailable == true)]
+            | length > 0
+          '
+
+      - name: Generate the pinned-toolchain v1.0.0 baseline candidate
+        run: Scripts/generate-api-baseline-candidate.sh "${{ runner.temp }}/swift-api-baseline-candidate"
+
+      - name: Require the reviewed baseline to match hosted provenance
+        run: >-
+          cmp
+          API/SwiftAwesomeButton-v1.0.0-arm64-apple-ios-simulator.json
+          "${{ runner.temp }}/swift-api-baseline-candidate/SwiftAwesomeButton-v1.0.0-arm64-apple-ios-simulator.json"
+
+      - name: Run package release preflight
+        run: Scripts/release-preflight.sh
+
+      - name: Upload informational XCTest coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: swift-awesome-button-coverage
+          path: |
+            ${{ runner.temp }}/swift-awesome-button-artifacts/SwiftAwesomeButton.xcresult
+            ${{ runner.temp }}/swift-awesome-button-artifacts/SwiftAwesomeButton-coverage.json
+            ${{ runner.temp }}/swift-awesome-button-artifacts/SwiftAwesomeButton-coverage.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload hosted API baseline provenance candidate
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: swift-awesome-button-v1-api-baseline-candidate
+          path: ${{ runner.temp }}/swift-api-baseline-candidate/
+          if-no-files-found: ignore
+          retention-days: 14

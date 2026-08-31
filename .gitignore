@@ -1,4 +1,5 @@
 .build/
+build/
 Examples/**/build/
 .DS_Store
 xcuserdata/
