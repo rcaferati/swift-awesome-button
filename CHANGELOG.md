@@ -1,10 +1,10 @@
 # Changelog
 
-All notable package changes are documented here. This file describes the
-unreleased engineering-hardening work; it does not declare a release or change
-the package version.
+All notable package changes are documented here.
 
 ## Unreleased
+
+## 1.1.0 - 2026-08-31
 
 ### Added
 
@@ -61,8 +61,8 @@ the package version.
   state, callbacks, or accessibility semantics.
 - The compiler API comparison uses `v1.0.0` as its reviewed baseline. Seven
   exact defaulted-initializer expansions are allowlisted as source-compatible
-  and ABI-breaking until the next immutable release baseline; all other API
-  breakages fail.
+  and ABI-breaking until the post-release `v1.1.0` baseline rotation; all other
+  API breakages fail.
 
 Historical `v1.0.0` details remain in
 [`RELEASE_NOTES_1.0.0.md`](RELEASE_NOTES_1.0.0.md).

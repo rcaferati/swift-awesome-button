@@ -23,8 +23,11 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
       AWESOME_BUTTON_SIMULATOR_NAME: iPhone 17 Pro
       AWESOME_BUTTON_SIMULATOR_OS: '26.2'
-      AWESOME_BUTTON_ARTIFACTS_DIR: ${{ runner.temp }}/swift-awesome-button-artifacts
     steps:
+      - name: Configure runner paths
+        shell: bash
+        run: echo "AWESOME_BUTTON_ARTIFACTS_DIR=$RUNNER_TEMP/swift-awesome-button-artifacts" >> "$GITHUB_ENV"
+
       - name: Checkout source and immutable tags
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
